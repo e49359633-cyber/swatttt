@@ -20,7 +20,6 @@ dp = Dispatcher()
 class PaymentStates(StatesGroup):
     waiting_for_receipt = State()
 
-# --- ФУНКЦИИ ФАЙЛА ---
 def load_items():
     if not os.path.exists(ITEMS_FILE): return []
     items = []
@@ -33,11 +32,10 @@ def save_item(name, price, desc):
     with open(ITEMS_FILE, 'a', encoding='utf-8') as f:
         f.write(f"{name}|{price}|{desc}\n")
 
-# --- РЕКВИЗИТЫ ---
 REQUISITES = (
     "💳 **Kaspi:** `+7 707 000 00 00`\n"
     "🪙 **USDT (TRC20):** `TАдресКошелька...`\n\n"
-    "⚠️ **ВАЖНО:** После оплаты отправьте СКРИНШОТ чека прямо в этот чат."
+    "⚠️ **ВАЖНО:** Отправьте скриншот чека прямо сюда в чат!"
 )
 
 def main_menu():
@@ -48,10 +46,9 @@ def main_menu():
 
 @dp.message(Command("start"))
 async def start(message: types.Message, state: FSMContext):
-    await state.clear() # Сбрасываем состояния при старте
+    await state.clear()
     await message.answer(f"Привет, {message.from_user.first_name}!", reply_markup=main_menu())
 
-# --- АДМИНКА ---
 @dp.message(Command("admin"))
 async def admin_panel(message: types.Message):
     if message.from_user.username in ADMINS:
@@ -67,13 +64,12 @@ async def add_product(message: types.Message):
     except:
         await message.answer("Ошибка. Пример: `/add Тест 100 Описание`")
 
-# --- КАТАЛОГ ---
 @dp.callback_query(F.data == "catalog")
 async def show_catalog(callback: types.CallbackQuery):
     items = load_items()
     builder = InlineKeyboardBuilder()
     if not items:
-        await callback.message.edit_text("Пусто.", reply_markup=main_menu())
+        await callback.message.edit_text("Каталог пуст.", reply_markup=main_menu())
         return
     for idx, item in enumerate(items):
         builder.row(types.InlineKeyboardButton(text=f"{item[0]} — {item[1]}₸", callback_data=f"info_{idx}"))
@@ -89,29 +85,26 @@ async def info(callback: types.CallbackQuery):
     builder.row(types.InlineKeyboardButton(text="⬅️ Назад", callback_data="catalog"))
     await callback.message.edit_text(f"🔹 **{item[0]}**\n💰 Цена: {item[1]}₸\n\n{item[2]}", reply_markup=builder.as_markup())
 
-# --- ПРОЦЕСС ОПЛАТЫ ---
+# --- ВКЛЮЧАЕМ ОЖИДАНИЕ ЧЕКА ---
 @dp.callback_query(F.data.startswith("pay_"))
 async def pay(callback: types.CallbackQuery, state: FSMContext):
     idx = int(callback.data.split("_")[1])
     item = load_items()[idx]
     
-    # Сохраняем инфу о товаре в память бота для этого юзера
-    await state.update_data(product_name=item[0], product_price=item[1])
+    await state.update_data(product_name=item[0])
     await state.set_state(PaymentStates.waiting_for_receipt)
     
     await callback.message.edit_text(f"🚀 **Оплата {item[0]}**\n\n{REQUISITES}")
     await callback.answer()
 
-# --- ПРИЕМ ЧЕКА ---
+# --- ОБРАБОТКА ФОТО ---
 @dp.message(PaymentStates.waiting_for_receipt, F.photo)
 async def handle_receipt(message: types.Message, state: FSMContext):
-    user_data = await state.get_data()
-    prod_name = user_data.get('product_name')
+    data = await state.get_data()
+    prod_name = data.get('product_name')
     
-    # Подтверждаем юзеру
-    await message.answer("✅ Чек получен! Админы проверят оплату и свяжутся с вами.")
+    await message.answer("✅ **Чек получен!** Админы проверят оплату.")
     
-    # Пересылаем админам
     for admin_id in ADMIN_IDS:
         try:
             await bot.send_photo(
@@ -120,12 +113,7 @@ async def handle_receipt(message: types.Message, state: FSMContext):
                 caption=f"💰 **НОВЫЙ ЧЕК!**\n👤 От: @{message.from_user.username}\n📦 Товар: {prod_name}"
             )
         except: pass
-    
-    await state.clear() # Сбрасываем ожидание
-
-@dp.message(PaymentStates.waiting_for_receipt)
-async def not_photo(message: types.Message):
-    await message.answer("⚠ Пожалуйста, отправьте именно **фотографию** (скриншот) чека.")
+    await state.clear()
 
 @dp.callback_query(F.data == "back")
 async def back(callback: types.CallbackQuery, state: FSMContext):
@@ -133,7 +121,6 @@ async def back(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.edit_text("Главное меню:", reply_markup=main_menu())
 
 async def main():
-    print("Бот ramaz666 и killedfear готов принимать чеки!")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
