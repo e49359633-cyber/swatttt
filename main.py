@@ -33,8 +33,7 @@ def save_item(name, price, desc):
         f.write(f"{name}|{price}|{desc}\n")
 
 REQUISITES = (
-    "💳 **Kaspi:** ``\n"
-    "🪙 **USDT (TRC20):** `adress...`\n\n"
+    "🪙 **USDT (TRC20):** `UQCHqJyy-SHGrkhdGLjM9GwOE_AJhc2ghdGAu0yorgdeOUUO`\n\n"
     "⚠️ **ВАЖНО:** Отправьте скриншот чека прямо сюда в чат!"
 )
 
