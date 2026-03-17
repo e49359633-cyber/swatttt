@@ -3,14 +3,14 @@ import os
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.exceptions import TelegramBadRequest
 
 # --- КОНФИГ ---
 API_TOKEN = '7588624859:AAGlzc_riQhPWg-GnlHSrKmOLEsZ05_-ts8'
-ADMINS = ['ramaz666', 'killedfear']  # Ники для доступа к /admin
+ADMINS = ['ramaz666', 'killedfear'] 
+ADMIN_IDS = [8384467554, 8209617821] 
 
-# ВАЖНО: Впишите сюда ваши числовые ID через запятую (узнать в @userinfobot)
-# Например: [12345678, 87654321]
-ADMIN_IDS = [0, 8209617821import asyncio
+ITEMS_FILE = 'items.txt'
 import os
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
