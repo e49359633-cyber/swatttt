@@ -33,15 +33,15 @@ def save_item(name, price, desc):
         f.write(f"{name}|{price}|{desc}\n")
 
 REQUISITES = (
-    "💳 **Kaspi:** `+7 707 000 00 00`\n"
-    "🪙 **USDT (TRC20):** `TАдресКошелька...`\n\n"
+    "💳 **Kaspi:** ``\n"
+    "🪙 **USDT (TRC20):** `adress...`\n\n"
     "⚠️ **ВАЖНО:** Отправьте скриншот чека прямо сюда в чат!"
 )
 
 def main_menu():
     builder = InlineKeyboardBuilder()
     builder.row(types.InlineKeyboardButton(text="🛒 Каталог", callback_data="catalog"))
-    builder.row(types.InlineKeyboardButton(text="👤 Поддержка", url="https://t.me/ramaz666"))
+    builder.row(types.InlineKeyboardButton(text="👤 Поддержка", url="https://t.me/sapportd"))
     return builder.as_markup()
 
 @dp.message(Command("start"))
@@ -52,7 +52,7 @@ async def start(message: types.Message, state: FSMContext):
 @dp.message(Command("admin"))
 async def admin_panel(message: types.Message):
     if message.from_user.username in ADMINS:
-        await message.answer("👑 **Админка**\n`/add Название Цена Описание`")
+        await message.answer(" **панель админ**\n`/add Название Цена Описание`")
 
 @dp.message(F.text.startswith("/add"))
 async def add_product(message: types.Message):
@@ -60,7 +60,7 @@ async def add_product(message: types.Message):
     try:
         parts = message.text.split(maxsplit=3)
         save_item(parts[1], parts[2], parts[3])
-        await message.answer(f"✅ Добавлен: {parts[1]}")
+        await message.answer(f"Добавлен: {parts[1]}")
     except:
         await message.answer("Ошибка. Пример: `/add Тест 100 Описание`")
 
@@ -73,8 +73,8 @@ async def show_catalog(callback: types.CallbackQuery):
         return
     for idx, item in enumerate(items):
         builder.row(types.InlineKeyboardButton(text=f"{item[0]} — {item[1]}₸", callback_data=f"info_{idx}"))
-    builder.row(types.InlineKeyboardButton(text="⬅️ Назад", callback_data="back"))
-    await callback.message.edit_text("📦 Выберите товар:", reply_markup=builder.as_markup())
+    builder.row(types.InlineKeyboardButton(text="⬅️Назад", callback_data="back"))
+    await callback.message.edit_text("Выберите товар:", reply_markup=builder.as_markup())
 
 @dp.callback_query(F.data.startswith("info_"))
 async def info(callback: types.CallbackQuery):
@@ -103,7 +103,7 @@ async def handle_receipt(message: types.Message, state: FSMContext):
     data = await state.get_data()
     prod_name = data.get('product_name')
     
-    await message.answer("✅ **Чек получен!** Админы проверят оплату.")
+    await message.answer("✅ **Чек получен!** саппорт проверят оплату.")
     
     for admin_id in ADMIN_IDS:
         try:
