@@ -33,25 +33,39 @@ def save_item(name, price, desc):
         f.write(f"{name}|{price}|{desc}\n")
 
 REQUISITES = (
-    "🪙 **USDT (TRC20):** `UQCHqJyy-SHGrkhdGLjM9GwOE_AJhc2ghdGAu0yorgdeOUUO`\n\n"
-    "⚠️ **ВАЖНО:** Отправьте скриншот чека прямо сюда в чат!"
+    "🪙 USDT (TRC20): `UQCHqJyy-SHGrkhdGLjM9GwOE_AJhc2ghdGAu0yorgdeOUUO`\n\n"
+    "⚠️ ВАЖНО: Отправьте скриншот чека прямо сюда в чат!"
 )
 
+# --- КЛАВИАТУРЫ ---
 def main_menu():
     builder = InlineKeyboardBuilder()
     builder.row(types.InlineKeyboardButton(text="🛒 Каталог", callback_data="catalog"))
+    builder.row(types.InlineKeyboardButton(text="🤖 Наши боты", callback_data="our_bots"))
     builder.row(types.InlineKeyboardButton(text="👤 Поддержка", url="https://t.me/sapportd"))
     return builder.as_markup()
 
+def bots_menu():
+    builder = InlineKeyboardBuilder()
+    builder.row(types.InlineKeyboardButton(text="🤖 Root Mail Robot", url="https://t.me/rootmailrobot"))
+    builder.row(types.InlineKeyboardButton(text="💣 SMS Bomber Robot", url="https://t.me/smsmsbomrobot"))
+    builder.row(types.InlineKeyboardButton(text="⬅️ Назад", callback_data="back"))
+    return builder.as_markup()
+
+# --- ХЕНДЛЕРЫ ---
 @dp.message(Command("start"))
 async def start(message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer(f"Привет, {message.from_user.first_name}!", reply_markup=main_menu())
 
+@dp.callback_query(F.data == "our_bots")
+async def show_bots(callback: types.CallbackQuery):
+    await callback.message.edit_text("🤖 Наши официальные боты:", reply_markup=bots_menu())
+
 @dp.message(Command("admin"))
 async def admin_panel(message: types.Message):
     if message.from_user.username in ADMINS:
-        await message.answer(" **панель админ**\n`/add Название Цена Описание`")
+        await message.answer("панель админ\n/add Название Цена Описание")
 
 @dp.message(F.text.startswith("/add"))
 async def add_product(message: types.Message):
@@ -61,7 +75,7 @@ async def add_product(message: types.Message):
         save_item(parts[1], parts[2], parts[3])
         await message.answer(f"Добавлен: {parts[1]}")
     except:
-        await message.answer("Ошибка. Пример: `/add Тест 100 Описание`")
+        await message.answer("Ошибка. Пример: /add Тест 100 Описание")
 
 @dp.callback_query(F.data == "catalog")
 async def show_catalog(callback: types.CallbackQuery):
@@ -72,7 +86,7 @@ async def show_catalog(callback: types.CallbackQuery):
         return
     for idx, item in enumerate(items):
         builder.row(types.InlineKeyboardButton(text=f"{item[0]} — {item[1]}₸", callback_data=f"info_{idx}"))
-    builder.row(types.InlineKeyboardButton(text="⬅️Назад", callback_data="back"))
+    builder.row(types.InlineKeyboardButton(text="⬅️ Назад", callback_data="back"))
     await callback.message.edit_text("Выберите товар:", reply_markup=builder.as_markup())
 
 @dp.callback_query(F.data.startswith("info_"))
@@ -82,9 +96,8 @@ async def info(callback: types.CallbackQuery):
     builder = InlineKeyboardBuilder()
     builder.row(types.InlineKeyboardButton(text="💳 Купить", callback_data=f"pay_{idx}"))
     builder.row(types.InlineKeyboardButton(text="⬅️ Назад", callback_data="catalog"))
-    await callback.message.edit_text(f"🔹 **{item[0]}**\n💰 Цена: {item[1]}₸\n\n{item[2]}", reply_markup=builder.as_markup())
+    await callback.message.edit_text(f"🔹 {item[0]}\n💰 Цена: {item[1]}₸\n\n{item[2]}", reply_markup=builder.as_markup())
 
-# --- ВКЛЮЧАЕМ ОЖИДАНИЕ ЧЕКА ---
 @dp.callback_query(F.data.startswith("pay_"))
 async def pay(callback: types.CallbackQuery, state: FSMContext):
     idx = int(callback.data.split("_")[1])
@@ -93,23 +106,22 @@ async def pay(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(product_name=item[0])
     await state.set_state(PaymentStates.waiting_for_receipt)
     
-    await callback.message.edit_text(f"🚀 **Оплата {item[0]}**\n\n{REQUISITES}")
+    await callback.message.edit_text(f"🚀 Оплата {item[0]}\n\n{REQUISITES}")
     await callback.answer()
 
-# --- ОБРАБОТКА ФОТО ---
 @dp.message(PaymentStates.waiting_for_receipt, F.photo)
 async def handle_receipt(message: types.Message, state: FSMContext):
     data = await state.get_data()
     prod_name = data.get('product_name')
     
-    await message.answer("✅ **Чек получен!** саппорт проверят оплату.")
+    await message.answer("✅ Чек получен! Саппорт проверит оплату.")
     
     for admin_id in ADMIN_IDS:
         try:
             await bot.send_photo(
                 admin_id, 
                 photo=message.photo[-1].file_id,
-                caption=f"💰 **НОВЫЙ ЧЕК!**\n👤 От: @{message.from_user.username}\n📦 Товар: {prod_name}"
+                caption=f"💰 НОВЫЙ ЧЕК!\n👤 От: @{message.from_user.username}\n📦 Товар: {prod_name}"
             )
         except: pass
     await state.clear()
